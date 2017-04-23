@@ -1,6 +1,11 @@
 var express = require('express');
 var path = require('path');
-var fortunes = require('./public/js/fortune');
+var bodyParser = require('body-parser');
+var router = require('./router/index');
+var cookieParser = require('cookie-parser');
+var sessionParser = require('express-session');
+//cookie加密
+var credentials = require('./credentials');
 
 var handlebars = require('express3-handlebars').create({
     defaultLayout: 'main',
@@ -25,28 +30,21 @@ app.set('views', path.join(__dirname, '/views/layouts'));
 
 //设置中间件
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'bower_components')));
+app.use(bodyParser());
+app.use(cookieParser(credentials.cookieSecret));
+app.use(sessionParser());
+
+//设置cookie
+app.use(function (req, res, next) {
+    //如果有即显消息，把它传到上下文中，然后清除它
+    res.locals.flash = req.session.flash;
+    delete req.session.flash;
+    next();
+});
 
 //设置路由
-app.get('/', function (req, res) {
-    res.render('home');
-});
-
-app.get('/about', function (req, res) {
-    res.render('about', {fortune: fortunes.randomFortune()});
-});
-
-app.get('/api/tours', function (req, res) {
-    
-});
-
-app.get('/headers', function (req, res) {
-    var s = '';
-    var headers = req.headers;
-    for (var name in headers) {
-        s += name + ': ' + headers[name] + '\n';
-    }
-    res.send(s);
-});
+app.use(router);
 
 //定制404页面
 app.use(function (req, res) {

@@ -3,11 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <title>Meadowlark Travel</title>
+    <!--css-->
+    <link rel="stylesheet" href="/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="/bootstrap/dist/css/bootstrap-theme.css">
+    <!--js-->
+    <script type="text/javascript" src="/jquery/dist/jquery.js"></script>
+    <script type="text/javascript" src="/bootstrap/dist/js/bootstrap.js"></script>
+    <style>
+        .main {
+            width: 960px;
+            margin: 0 auto;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <img src="images/huilive_icon.png" alt="huilive icon">
-    </header>
-    {{{ body }}}
+    <div id="container" class="main">
+        <div class="row col-md-12">
+            <header>
+                <img src="/images/huilive_icon.png" alt="huilive icon">
+            </header>
+        </div>
+        <div class="row col-md-12">
+            {{{ body }}}
+        </div>
+    </div>
+
+    {{#if flash}}
+        <div class="alert alert-dismissable alert-{{flash.type}}">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+                &times;
+            </button>
+            <strong>{{flash.intro}}</strong> {{{flash.message}}}
+        </div>
+    {{/if}}
 </body>
 </html>
