@@ -12,8 +12,19 @@ NewsletterSignup.prototype.save = function (cb) {
     cb();
 };
 
+function authorize(req, res, next) {
+    if (req.session.authorize) {
+        return next();
+    }
+    res.render('not-authorized');
+}
+
+router.get('/secret', authorize, function (req, res) {
+    res.render('secret');
+})
+
 //设置路由
-router.get('/', function (req, res) {
+router.get('/', authorize, function (req, res) {
     var url = 'home';
     var option = {title: req.query.message};
     //设置session
@@ -29,6 +40,19 @@ router.get('/', function (req, res) {
     res.render(url, option);
 });
 
+router.get('/foo', function (req, res, next) {
+    var num = Math.random();
+
+    if (num < .5) {
+        return next();
+    }
+    res.send('sometimes this');
+});
+
+router.get('/foo', function (req, res) {
+    res.send('and sometimes that');
+});
+
 router.get('/about', function (req, res) {
     var url = 'about';
     var options = {title: 'About', fortune: fortunes.randomFortune()};
@@ -37,7 +61,12 @@ router.get('/about', function (req, res) {
     res.render(url, options);
 });
 
-router.get('/users/login', function (req, res) {
+router.get('/users/login', function (req,res,next) {
+    if (!req.session.authorize) {
+        return next();
+    }
+    res.render('thankyou');
+}, function (req, res) {
     res.render('user-login');
 });
 
@@ -45,10 +74,19 @@ router.post('/users/verifyUser', function (req, res) {
     var username = req.body.username;
     var password = req.body.pwd;
     if (username == 'jacky' && password == '123456') {
+        req.session.authorize = true;
+        req.session.userId = 123;
+
         res.redirect(303, '/thankyou');
     } else {
         res.redirect(303, '/noAccess');
     }
+});
+
+router.get('/users/logout', function (req, res) {
+    //销毁session
+    req.session.destroy();
+    res.render('user-logout');
 });
 
 router.get('/thankyou', function (req, res) {
@@ -56,7 +94,9 @@ router.get('/thankyou', function (req, res) {
 });
 
 router.get('/noAccess', function (req, res) {
-    res.send('You failed to access');
+    res.send('<h2>You failed to access</h2>' +
+        '<p>username or password is not correct.</p>' +
+        '<p><a href="/users/login">please try again</a></p>');
 });
 
 router.get('/contact', function (req, res) {
@@ -91,8 +131,8 @@ router.post('/contest/vacation-photo/:year/:month', function (req, res) {
     });
 });
 
-router.get('/newsletter',function (req,res) {
-   res.render('newsletter/sub_newsletter');
+router.get('/newsletter', function (req, res) {
+    res.render('newsletter/sub_newsletter');
 });
 
 router.post('/newsletter/subscribe', function (req, res) {
@@ -135,12 +175,8 @@ router.post('/newsletter/subscribe', function (req, res) {
     });
 });
 
-router.get('/newsletter/archive',function (req,res) {
-   res.render('newsletter/archive');
-});
-
-router.get('/api/tours', function (req, res) {
-    console.log('2222');
+router.get('/newsletter/archive', function (req, res) {
+    res.render('newsletter/archive');
 });
 
 router.get('/headers', function (req, res) {

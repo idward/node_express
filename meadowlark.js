@@ -22,9 +22,15 @@ db.on('open', function () {
         name: String,
         sex: String
     });
+    
+    userSchema.methods.getName = function () {
+        console.log('我的名字叫' + this.name);
+    };
 
     var usersModel = mongoose.model('users', userSchema);
     var user = new usersModel({id: 004, name: 'idward', sex: 'male'});
+    //user.getName();
+
     //插入数据
     // user.save(function (err, user) {
     //     if (err) {
@@ -33,6 +39,34 @@ db.on('open', function () {
     //     }
     //     console.log('保存成功...');
     //     console.log(user);
+    // });
+
+    //更新数据
+    // usersModel.update({name: 'mike'}, {sex: 'male'}, {multi: true}, function (err, affectedLine) {
+    //     if (err) {
+    //         console.log(err);
+    //         return;
+    //     }
+    //     console.log('影响的行数: ' + affectedLine.n);
+    // });
+
+    //删除数据
+    // usersModel.remove({name: 'mike'}, function (err, delStatus) {
+    //     if (err) {
+    //         console.log(err);
+    //         return;
+    //     }
+    //     var count = delStatus.result.n;
+    //     try {
+    //         if (count){
+    //             console.log('删除成功...');
+    //         } else {
+    //            throw new Error('删除失败');
+    //         }
+    //     } catch (ex) {
+    //         console.log(ex);
+    //     }
+    //     console.log('删除条数: ' + count);
     // });
 
     //查询数据(一条)
@@ -44,6 +78,7 @@ db.on('open', function () {
     //     console.log('查询成功...');
     //     console.log(user);
     // });
+
     //查询所有数据
     // usersModel.find(function (err, users) {
     //     if (err) {
@@ -53,14 +88,24 @@ db.on('open', function () {
     //     console.log('查询成功...');
     //     console.log(users);
     // });
+
     //查询多条数据
-    usersModel.find({name: 'mike'}, function (err, users) {
+    // usersModel.find({name: 'mike'}, function (err, users) {
+    //     if (err) {
+    //         console.log(err);
+    //         return;
+    //     }
+    //     console.log('查询成功...');
+    //     console.log(users);
+    // });
+
+    //统计数据
+    usersModel.count({name: 'mike'}, function (err, nums) {
         if (err) {
             console.log(err);
             return;
         }
-        console.log('查询成功...');
-        console.log(users);
+        console.log('查询到相同数据: ' + nums + ' 条');
     });
 
 });
