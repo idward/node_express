@@ -26,15 +26,17 @@
         <div class="row col-md-12">
             {{{ body }}}
         </div>
-    </div>
-
-    {{#if flash}}
-        <div class="alert alert-dismissable alert-{{flash.type}}">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">
-                &times;
-            </button>
-            <strong>{{flash.intro}}</strong> {{{flash.message}}}
+        <!--显示警告-->
+        <div class="row col-md-12">
+            {{#if flash}}
+                <div class="alert alert-dismissable alert-{{flash.type}}">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+                        &times;
+                    </button>
+                    <strong>{{flash.intro}}</strong> {{{flash.message}}}
+                </div>
+            {{/if}}
         </div>
-    {{/if}}
+    </div>
 </body>
 </html>

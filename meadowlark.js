@@ -4,12 +4,77 @@ var bodyParser = require('body-parser');
 var router = require('./router/index');
 var cookieParser = require('cookie-parser');
 var sessionParser = require('express-session');
+var mongoose = require('mongoose');
+
+var db = mongoose.connection;
+
+db.on('error', function (err) {
+    console.log('数据库连接失败...');
+    console.log(err.stack);
+});
+
+db.on('open', function () {
+    //数据库连接成功
+    console.log('数据库连接成功...');
+    //创建模式和模型
+    var userSchema = new mongoose.Schema({
+        id: Number,
+        name: String,
+        sex: String
+    });
+
+    var usersModel = mongoose.model('users', userSchema);
+    var user = new usersModel({id: 004, name: 'idward', sex: 'male'});
+    //插入数据
+    // user.save(function (err, user) {
+    //     if (err) {
+    //         console.log(err);
+    //         return;
+    //     }
+    //     console.log('保存成功...');
+    //     console.log(user);
+    // });
+
+    //查询数据(一条)
+    // usersModel.findOne({name: 'jacky'}, function (err, user) {
+    //     if (err) {
+    //         console.log(err);
+    //         return;
+    //     }
+    //     console.log('查询成功...');
+    //     console.log(user);
+    // });
+    //查询所有数据
+    // usersModel.find(function (err, users) {
+    //     if (err) {
+    //         console.log(err);
+    //         return;
+    //     }
+    //     console.log('查询成功...');
+    //     console.log(users);
+    // });
+    //查询多条数据
+    usersModel.find({name: 'mike'}, function (err, users) {
+        if (err) {
+            console.log(err);
+            return;
+        }
+        console.log('查询成功...');
+        console.log(users);
+    });
+
+});
+
+mongoose.connect('mongodb://localhost/meadowlark');
+// mongoose.connect('mongodb://username:passward@localhost/meadowlark');
+
 //cookie加密
 var credentials = require('./credentials');
 
 var handlebars = require('express3-handlebars').create({
-    defaultLayout: 'main',
-    extname: '.hbs'
+    layoutsDir: __dirname + '/views/layouts', //模板路径
+    defaultLayout: 'main', //缺省模板布局
+    extname: '.hbs'  //模板扩展名
 });
 
 var app = express();
@@ -26,7 +91,7 @@ app.engine('hbs', handlebars.engine);
 //     extname: '.hbs'
 // }));
 
-app.set('views', path.join(__dirname, '/views/layouts'));
+app.set('views', path.join(__dirname, 'views', 'layouts'));
 
 //设置中间件
 app.use(express.static(path.join(__dirname, 'public')));
@@ -35,7 +100,7 @@ app.use(bodyParser());
 app.use(cookieParser(credentials.cookieSecret));
 app.use(sessionParser());
 
-//设置cookie
+//中间件
 app.use(function (req, res, next) {
     //如果有即显消息，把它传到上下文中，然后清除它
     res.locals.flash = req.session.flash;
