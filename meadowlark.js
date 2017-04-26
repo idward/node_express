@@ -5,6 +5,10 @@ var router = require('./router/index');
 var cookieParser = require('cookie-parser');
 var sessionParser = require('express-session');
 var mongoose = require('mongoose');
+var errorHandler = require('errorhandler');
+
+//导入模型
+var Users = require('./model/users');
 
 var db = mongoose.connection;
 
@@ -16,33 +20,49 @@ db.on('error', function (err) {
 db.on('open', function () {
     //数据库连接成功
     console.log('数据库连接成功...');
-    //创建模式和模型
-    var userSchema = new mongoose.Schema({
-        id: Number,
-        name: String,
-        sex: String
-    });
-    
-    userSchema.methods.getName = function () {
-        console.log('我的名字叫' + this.name);
-    };
-
-    var usersModel = mongoose.model('users', userSchema);
-    var user = new usersModel({id: 004, name: 'idward', sex: 'male'});
-    //user.getName();
-
-    //插入数据
-    // user.save(function (err, user) {
+    //用户数据
+    var userData = {id: 12, name: 'Barry111', sex: 'male'};
+    //创建用户模型数据
+    var user;
+    //在保存数据之前调用prefixName
+    // user.prefixName(function (err, name) {
     //     if (err) {
-    //         console.log(err);
-    //         return;
+    //         throw err;
     //     }
-    //     console.log('保存成功...');
-    //     console.log(user);
+    //     console.log('Your new name is ' + name);
     // });
 
+    //先查询对象是否存在
+    Users.find(userData, function (err, users) {
+        if (users.length) {
+            user = users[0];
+            //更新数据
+            user.save(function (err, userId) {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+                console.log('更新成功...');
+                console.log(userId);
+            });
+        } else {
+            //创建用户模型数据
+            user = new Users(userData);
+            //插入数据
+            user.save(function (err, user) {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+                console.log('保存成功...');
+                console.log(user);
+            });
+        }
+    });
+
+
     //更新数据
-    // usersModel.update({name: 'mike'}, {sex: 'male'}, {multi: true}, function (err, affectedLine) {
+    // Users.update({name: 'mike'}, {sex: 'male'}, {multi: true}, function (err, affectedLine) {
     //     if (err) {
     //         console.log(err);
     //         return;
@@ -51,7 +71,7 @@ db.on('open', function () {
     // });
 
     //删除数据
-    // usersModel.remove({name: 'mike'}, function (err, delStatus) {
+    // Users.remove({name: 'mike'}, function (err, delStatus) {
     //     if (err) {
     //         console.log(err);
     //         return;
@@ -70,7 +90,7 @@ db.on('open', function () {
     // });
 
     //查询数据(一条)
-    // usersModel.findOne({name: 'jacky'}, function (err, user) {
+    // Users.findOne({name: 'jacky'}, function (err, user) {
     //     if (err) {
     //         console.log(err);
     //         return;
@@ -80,7 +100,7 @@ db.on('open', function () {
     // });
 
     //查询所有数据
-    // usersModel.find(function (err, users) {
+    // Users.find(function (err, users) {
     //     if (err) {
     //         console.log(err);
     //         return;
@@ -90,7 +110,7 @@ db.on('open', function () {
     // });
 
     //查询多条数据
-    // usersModel.find({name: 'mike'}, function (err, users) {
+    // Users.find({name: 'mike'}, function (err, users) {
     //     if (err) {
     //         console.log(err);
     //         return;
@@ -100,18 +120,14 @@ db.on('open', function () {
     // });
 
     //统计数据
-    usersModel.count({name: 'mike'}, function (err, nums) {
-        if (err) {
-            console.log(err);
-            return;
-        }
-        console.log('查询到相同数据: ' + nums + ' 条');
-    });
-
+    // Users.count({name: 'mike'}, function (err, nums) {
+    //     if (err) {
+    //         console.log(err);
+    //         return;
+    //     }
+    //     console.log('查询到相同数据: ' + nums + ' 条');
+    // });
 });
-
-mongoose.connect('mongodb://localhost/meadowlark');
-// mongoose.connect('mongodb://username:passward@localhost/meadowlark');
 
 //cookie加密
 var credentials = require('./credentials');
@@ -155,6 +171,15 @@ app.use(function (req, res, next) {
 
 //设置路由
 app.use(router);
+
+//判断模式(开发|生产)
+if ('development' === app.get('env')) {
+    //错误处理
+    app.use(errorHandler());
+    //连接数据库
+    mongoose.connect('mongodb://localhost/meadowlark');
+    // mongoose.connect('mongodb://username:passward@localhost/meadowlark');
+}
 
 //定制404页面
 app.use(function (req, res) {
