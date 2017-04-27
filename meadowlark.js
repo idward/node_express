@@ -1,3 +1,8 @@
+//node核心模块
+var http = require('http');
+var fs = require('fs');
+var url = require('url');
+//express核心及中间件
 var express = require('express');
 var path = require('path');
 var bodyParser = require('body-parser');
@@ -9,7 +14,7 @@ var errorHandler = require('errorhandler');
 
 //导入模型
 var Users = require('./model/users');
-
+//数据库连接状态
 var db = mongoose.connection;
 
 db.on('error', function (err) {
@@ -139,6 +144,8 @@ var handlebars = require('express3-handlebars').create({
 });
 
 var app = express();
+var server = http.createServer(app);
+var io = require('socket.io')(server);
 
 app.set('port', process.env.PORT || 3000);
 
@@ -166,8 +173,34 @@ app.use(function (req, res, next) {
     //如果有即显消息，把它传到上下文中，然后清除它
     res.locals.flash = req.session.flash;
     delete req.session.flash;
+
+    //
+    var file = url.parse(req.url).pathname;
+    var mode = 'reload';
+    createWatcher(file, mode);
+    //放行
     next();
 });
+
+var watchers = {};
+
+function createWatcher(file, event) {
+    var absolute = path.join(__dirname + '/public', file);
+    console.log(event);
+    console.log(watchers);
+
+    if (watchers[absolute]) {
+        return;
+    } else {
+        fs.watchFile(absolute, function (curr, prev) {
+            if (curr.mtime !== prev.mtime) {
+                console.log('文件被修改');
+                io.sockets.emit(event, file);
+            }
+        });
+        watchers[absolute] = true;
+    }
+}
 
 //设置路由
 app.use(router);
