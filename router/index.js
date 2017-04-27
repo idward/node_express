@@ -61,7 +61,7 @@ router.get('/about', function (req, res) {
     res.render(url, options);
 });
 
-router.get('/users/login', function (req,res,next) {
+router.get('/users/login', function (req, res, next) {
     if (!req.session.authorize) {
         return next();
     }
@@ -186,6 +186,36 @@ router.get('/headers', function (req, res) {
         s += name + ': ' + headers[name] + '\n';
     }
     res.send(s);
+});
+
+router.get('/api/attractions', function (req, res) {
+    res.render('attraction/index');
+});
+
+router.post('/api/attraction', function (req, res) {
+    //数据模型
+    var attraction = new Attraction({
+        name: req.body.name,
+        description: req.body.description,
+        location: {
+            lat: req.body.lat,
+            lng: req.body.lng
+        },
+        history: {
+            event: 'created',
+            email: req.body.email,
+            date: new Date()
+        },
+        approved: false
+    });
+    //保存数据
+    attraction.save(function (err, attr) {
+        if (err) {
+            return res.send(500, 'Error occurred: database error.');
+        }
+        //如果保存成功,返回id
+        res.json({id: attr._id});
+    });
 });
 
 

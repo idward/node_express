@@ -11,9 +11,12 @@ var cookieParser = require('cookie-parser');
 var sessionParser = require('express-session');
 var mongoose = require('mongoose');
 var errorHandler = require('errorhandler');
+//跨域请求
+var cors = require('cors');
 
 //导入模型
 var Users = require('./model/users');
+var Attraction = require('./model/attraction')
 //数据库连接状态
 var db = mongoose.connection;
 
@@ -144,8 +147,8 @@ var handlebars = require('express3-handlebars').create({
 });
 
 var app = express();
-var server = http.createServer(app);
-var io = require('socket.io')(server);
+// var server = http.createServer(app);
+// var io = require('socket.io')(server);
 
 app.set('port', process.env.PORT || 3000);
 
@@ -167,6 +170,8 @@ app.use(express.static(path.join(__dirname, 'bower_components')));
 app.use(bodyParser());
 app.use(cookieParser(credentials.cookieSecret));
 app.use(sessionParser());
+//跨域请求
+//app.use('/api', cors());
 
 //中间件
 app.use(function (req, res, next) {
@@ -175,32 +180,32 @@ app.use(function (req, res, next) {
     delete req.session.flash;
 
     //
-    var file = url.parse(req.url).pathname;
-    var mode = 'reload';
-    createWatcher(file, mode);
+    // var file = url.parse(req.url).pathname;
+    // var mode = 'reload';
+    // createWatcher(file, mode);
     //放行
     next();
 });
 
-var watchers = {};
+//var watchers = {};
 
-function createWatcher(file, event) {
-    var absolute = path.join(__dirname + '/public', file);
-    console.log(event);
-    console.log(watchers);
-
-    if (watchers[absolute]) {
-        return;
-    } else {
-        fs.watchFile(absolute, function (curr, prev) {
-            if (curr.mtime !== prev.mtime) {
-                console.log('文件被修改');
-                io.sockets.emit(event, file);
-            }
-        });
-        watchers[absolute] = true;
-    }
-}
+// function createWatcher(file, event) {
+//     var absolute = path.join(__dirname + '/public', file);
+//     console.log(event);
+//     console.log(watchers);
+//
+//     if (watchers[absolute]) {
+//         return;
+//     } else {
+//         fs.watchFile(absolute, function (curr, prev) {
+//             if (curr.mtime !== prev.mtime) {
+//                 console.log('文件被修改');
+//                 io.sockets.emit(event, file);
+//             }
+//         });
+//         watchers[absolute] = true;
+//     }
+// }
 
 //设置路由
 app.use(router);
