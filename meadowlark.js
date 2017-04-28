@@ -35,7 +35,7 @@ app.use(bodyParser());
 app.use(cookieParser(credentials.cookieSecret));
 app.use(sessionParser());
 
-//设置cookie
+//设置中间件
 app.use(function (req, res, next) {
     //如果有即显消息，把它传到上下文中，然后清除它
     res.locals.flash = req.session.flash;

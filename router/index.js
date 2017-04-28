@@ -1,9 +1,10 @@
 var express = require('express');
 var router = express.Router();
+//幸运随机数生成
 var fortunes = require('../public/js/fortune');
-
+//上传文件处理　
 var formidable = require('formidable');
-
+//邮件合法格式验证规则
 var VALID_EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
 function NewsletterSignup() {
@@ -14,19 +15,24 @@ NewsletterSignup.prototype.save = function (cb) {
 
 //设置路由
 router.get('/', function (req, res) {
-    var url = 'home';
-    var option = {title: req.query.message};
-    //设置session
-    // req.session.userName = 'Anonymous';
-    // var colorScheme = req.session.colorScheme || 'dark';
-    //设置cookie
-    res.cookie('monster', 'nom nom');
-    res.cookie('signed_monster', 'nom nom', {
-        signed: true,
-        httpOnly: true, //防范xss攻击 只能服务器端修改
-        maxAge: 1000 * 60 //cookie 失效时间
-    });
-    res.render(url, option);
+    if (req.session.userid) {
+        var url = 'home';
+        var username = req.session.userid;
+        var option = {title: req.query.message, username: username};
+        //设置session
+        // req.session.userName = 'Anonymous';
+        // var colorScheme = req.session.colorScheme || 'dark';
+        //设置cookie
+        res.cookie('monster', 'nom nom');
+        res.cookie('signed_monster', 'nom nom', {
+            signed: true,
+            httpOnly: true, //防范xss攻击 只能服务器端修改
+            maxAge: 1000 * 60 //cookie 失效时间
+        });
+        res.render(url, option);
+    } else {
+        res.redirect(303, '/users/login');
+    }
 });
 
 router.get('/about', function (req, res) {
@@ -45,10 +51,18 @@ router.post('/users/verifyUser', function (req, res) {
     var username = req.body.username;
     var password = req.body.pwd;
     if (username == 'jacky' && password == '123456') {
+        req.session.userid = '1234';
         res.redirect(303, '/thankyou');
     } else {
         res.redirect(303, '/noAccess');
     }
+});
+
+router.get('/users/logout', function (req, res) {
+    if (req.session.userid) {
+        req.session.destroy();
+    }
+    res.redirect(303, '/');
 });
 
 router.get('/thankyou', function (req, res) {
@@ -56,7 +70,9 @@ router.get('/thankyou', function (req, res) {
 });
 
 router.get('/noAccess', function (req, res) {
-    res.send('You failed to access');
+    res.send('<h2>Login Failure!</h2>' +
+        '<p>Username or Password is not correct, Please try again.</p>' +
+        '<a href="/users/login">login</a>');
 });
 
 router.get('/contact', function (req, res) {
@@ -91,8 +107,8 @@ router.post('/contest/vacation-photo/:year/:month', function (req, res) {
     });
 });
 
-router.get('/newsletter',function (req,res) {
-   res.render('newsletter/sub_newsletter');
+router.get('/newsletter', function (req, res) {
+    res.render('newsletter/sub_newsletter');
 });
 
 router.post('/newsletter/subscribe', function (req, res) {
@@ -135,12 +151,8 @@ router.post('/newsletter/subscribe', function (req, res) {
     });
 });
 
-router.get('/newsletter/archive',function (req,res) {
-   res.render('newsletter/archive');
-});
-
-router.get('/api/tours', function (req, res) {
-    console.log('2222');
+router.get('/newsletter/archive', function (req, res) {
+    res.render('newsletter/archive');
 });
 
 router.get('/headers', function (req, res) {
