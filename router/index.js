@@ -13,6 +13,17 @@ NewsletterSignup.prototype.save = function (cb) {
     cb();
 };
 
+function authorize(req, res, next) {
+    if (req.session.authorize) {
+        return next();
+    }
+    res.render('not-authorized');
+}
+
+router.get('/secret', authorize, function (req, res) {
+    res.render('secret');
+})
+
 //设置路由
 router.get('/', function (req, res) {
     if (req.session.userid) {
@@ -35,6 +46,19 @@ router.get('/', function (req, res) {
     }
 });
 
+router.get('/foo', function (req, res, next) {
+    var num = Math.random();
+
+    if (num < .5) {
+        return next();
+    }
+    res.send('sometimes this');
+});
+
+router.get('/foo', function (req, res) {
+    res.send('and sometimes that');
+});
+
 router.get('/about', function (req, res) {
     var url = 'about';
     var options = {title: 'About', fortune: fortunes.randomFortune()};
@@ -43,7 +67,12 @@ router.get('/about', function (req, res) {
     res.render(url, options);
 });
 
-router.get('/users/login', function (req, res) {
+router.get('/users/login', function (req, res, next) {
+    if (!req.session.authorize) {
+        return next();
+    }
+    res.render('thankyou');
+}, function (req, res) {
     res.render('user-login');
 });
 
@@ -51,7 +80,9 @@ router.post('/users/verifyUser', function (req, res) {
     var username = req.body.username;
     var password = req.body.pwd;
     if (username == 'jacky' && password == '123456') {
-        req.session.userid = '1234';
+        req.session.authorize = true;
+        req.session.userId = 123;
+
         res.redirect(303, '/thankyou');
     } else {
         res.redirect(303, '/noAccess');
@@ -59,10 +90,9 @@ router.post('/users/verifyUser', function (req, res) {
 });
 
 router.get('/users/logout', function (req, res) {
-    if (req.session.userid) {
-        req.session.destroy();
-    }
-    res.redirect(303, '/');
+    //销毁session
+    req.session.destroy();
+    res.render('user-logout');
 });
 
 router.get('/thankyou', function (req, res) {
@@ -70,9 +100,9 @@ router.get('/thankyou', function (req, res) {
 });
 
 router.get('/noAccess', function (req, res) {
-    res.send('<h2>Login Failure!</h2>' +
-        '<p>Username or Password is not correct, Please try again.</p>' +
-        '<a href="/users/login">login</a>');
+    res.send('<h2>You failed to access</h2>' +
+        '<p>username or password is not correct.</p>' +
+        '<p><a href="/users/login">please try again</a></p>');
 });
 
 router.get('/contact', function (req, res) {
@@ -163,5 +193,36 @@ router.get('/headers', function (req, res) {
     }
     res.send(s);
 });
+
+router.get('/api/attractions', function (req, res) {
+    res.render('attraction/index');
+});
+
+router.post('/api/attraction', function (req, res) {
+    //数据模型
+    var attraction = new Attraction({
+        name: req.body.name,
+        description: req.body.description,
+        location: {
+            lat: req.body.lat,
+            lng: req.body.lng
+        },
+        history: {
+            event: 'created',
+            email: req.body.email,
+            date: new Date()
+        },
+        approved: false
+    });
+    //保存数据
+    attraction.save(function (err, attr) {
+        if (err) {
+            return res.send(500, 'Error occurred: database error.');
+        }
+        //如果保存成功,返回id
+        res.json({id: attr._id});
+    });
+});
+
 
 module.exports = router;
