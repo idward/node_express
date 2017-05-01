@@ -3,7 +3,6 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var userSchema = new Schema({
-    id: Number,
     name: {type: String, required: true},
     sex: String,
     created_at: Date,
@@ -39,4 +38,4 @@ userSchema.methods.prefixName = function (fn) {
 var Users = mongoose.model('users', userSchema);
 
 //导出模型
-module.exports = Users;
+// module.exports = Users;

@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+var mongoose = require('mongoose');
 //幸运随机数生成
 var fortunes = require('../public/js/fortune');
 //上传文件处理　
@@ -147,12 +148,12 @@ router.post('/newsletter/subscribe', function (req, res) {
     //输入验证
     if (!email.match(VALID_EMAIL_REGEX)) {
         if (req.xhr) {
-            return res.json({error: 'Invalid email address'});
+            return res.json({error: 'Invalid emailkey address'});
         }
         req.session.flash = {
             type: 'danger',
             intro: 'Validation error!',
-            message: 'The email address you entered was not valid'
+            message: 'The emailkey address you entered was not valid'
         };
         return res.redirect(303, '/newsletter/archive');
     }
@@ -222,6 +223,27 @@ router.post('/api/attraction', function (req, res) {
         //如果保存成功,返回id
         res.json({id: attr._id});
     });
+});
+
+router.get('/posts/:userId', function (req, res) {
+    mongoose.model('posts').find({_id: req.params.userId}).populate('postedBy').exec(function (err, posts) {
+        res.send(posts);
+    });
+});
+
+router.get('/users', function (req, res) {
+    mongoose.model('users').find({}, function (err, users) {
+        if (err) {
+            console.log(err);
+            return;
+        }
+        res.send(users);
+    })
+});
+
+//发送Email
+router.get('/email',function (req,res) {
+    require('../email/email_api');
 });
 
 

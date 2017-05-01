@@ -1,6 +1,6 @@
 //node核心模块
 var http = require('http');
-var fs = require('fs');
+var fs = require('fs')
 var url = require('url');
 //express核心及中间件
 var express = require('express');
@@ -12,11 +12,13 @@ var sessionParser = require('express-session');
 var mongoose = require('mongoose');
 var errorHandler = require('errorhandler');
 //跨域请求
-var cors = require('cors');
+// var cors = require('cors');
 
 //导入模型
-var Users = require('./model/users');
-var Attraction = require('./model/attraction')
+var Attraction = require('./model/attraction');
+require('./model/users');
+require('./model/posts')
+
 //数据库连接状态
 var db = mongoose.connection;
 
@@ -28,8 +30,9 @@ db.on('error', function (err) {
 db.on('open', function () {
     //数据库连接成功
     console.log('数据库连接成功...');
+
     //用户数据
-    var userData = {id: 12, name: 'Barry111', sex: 'male'};
+    var userData = {name: 'sherry', sex: 'female'};
     //创建用户模型数据
     var user;
     //在保存数据之前调用prefixName
@@ -41,7 +44,7 @@ db.on('open', function () {
     // });
 
     //先查询对象是否存在
-    Users.find(userData, function (err, users) {
+    mongoose.model('users').find(userData, function (err, users) {
         if (users.length) {
             user = users[0];
             //更新数据
@@ -55,19 +58,27 @@ db.on('open', function () {
             });
         } else {
             //创建用户模型数据
-            user = new Users(userData);
+            // user = new Users(userData);
             //插入数据
-            user.save(function (err, user) {
-                if (err) {
+            user = mongoose.model('users').create(userData,function (err,user) {
+                if(err){
                     console.log(err);
                     return;
                 }
                 console.log('保存成功...');
-                console.log(user);
+                console.log(users);
             });
+            //插入数据
+            // user.save(function (err, user) {
+            //     if (err) {
+            //         console.log(err);
+            //         return;
+            //     }
+            //     console.log('保存成功...');
+            //     console.log(user);
+            // });
         }
     });
-
 
     //更新数据
     // Users.update({name: 'mike'}, {sex: 'male'}, {multi: true}, function (err, affectedLine) {
@@ -147,8 +158,6 @@ var handlebars = require('express3-handlebars').create({
 });
 
 var app = express();
-// var server = http.createServer(app);
-// var io = require('socket.io')(server);
 
 app.set('port', process.env.PORT || 3000);
 
@@ -178,34 +187,9 @@ app.use(function (req, res, next) {
     //如果有即显消息，把它传到上下文中，然后清除它
     res.locals.flash = req.session.flash;
     delete req.session.flash;
-
-    //
-    // var file = url.parse(req.url).pathname;
-    // var mode = 'reload';
-    // createWatcher(file, mode);
     //放行
     next();
 });
-
-//var watchers = {};
-
-// function createWatcher(file, event) {
-//     var absolute = path.join(__dirname + '/public', file);
-//     console.log(event);
-//     console.log(watchers);
-//
-//     if (watchers[absolute]) {
-//         return;
-//     } else {
-//         fs.watchFile(absolute, function (curr, prev) {
-//             if (curr.mtime !== prev.mtime) {
-//                 console.log('文件被修改');
-//                 io.sockets.emit(event, file);
-//             }
-//         });
-//         watchers[absolute] = true;
-//     }
-// }
 
 //设置路由
 app.use(router);
