@@ -10,7 +10,7 @@ function smartJoin(arr, separator) {
     }).join(separator);
 }
 
-module.exports = function (customerId) {
+function getCustomerViewModel (customerId) {
     var customer = Customer.findById(customerId);
     if (!customer) {
         return {error: 'Unknown customer ID: ' + req.params.customerId};
@@ -24,23 +24,16 @@ module.exports = function (customerId) {
             url: '/orders/' + order.orderNumer
         }
     });
+    //过滤掉这个字段
+    var vm = _.omit(customer,'salesNotes');
     //返回数据
-    return {
-        firstName: customer.firstName,
-        lastName: customer.lastName,
-        name: smartJoin([customer.firstName, customer.lastName]),
-        email: customer.email,
-        address1: customer.address1,
-        address2: customer.address2,
-        city: customer.city,
-        state: customer.state,
-        zip: customer.zip,
+    return _.extend(vm, {
+        name: smartJoin([vm.firstName, vm.lastName]),
         fullAddress: smartJoin([
-            customer.address1,
-            customer.address2,
-            customer.city + ', ' + customer.state + ' ' + customer.zip
+            vm.address1,
+            vm.address2,
+            vm.city + ', ' + vm.state + ' ' + vm.zip
         ], '<br>'),
-        phone: customer.phone,
         orders: customer.getOrders().map(function (order) {
             return {
                 orderNumber: order.orderNumber,
@@ -49,7 +42,9 @@ module.exports = function (customerId) {
                 url: '/orders/' + order.orderNumber
             };
         })
-    };
+    });
 }
+
+module.exports = getCustomerViewModel;
 
 
