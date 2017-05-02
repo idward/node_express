@@ -1,9 +1,11 @@
 var express = require('express');
 var router = express.Router();
+var mongoose = require('mongoose');
+//幸运随机数生成
 var fortunes = require('../public/js/fortune');
-
+//上传文件处理　
 var formidable = require('formidable');
-
+//邮件合法格式验证规则
 var VALID_EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
 function NewsletterSignup() {
@@ -24,20 +26,25 @@ router.get('/secret', authorize, function (req, res) {
 })
 
 //设置路由
-router.get('/', authorize, function (req, res) {
-    var url = 'home';
-    var option = {title: req.query.message};
-    //设置session
-    // req.session.userName = 'Anonymous';
-    // var colorScheme = req.session.colorScheme || 'dark';
-    //设置cookie
-    res.cookie('monster', 'nom nom');
-    res.cookie('signed_monster', 'nom nom', {
-        signed: true,
-        httpOnly: true, //防范xss攻击 只能服务器端修改
-        maxAge: 1000 * 60 //cookie 失效时间
-    });
-    res.render(url, option);
+router.get('/', function (req, res) {
+    if (req.session.userid) {
+        var url = 'home';
+        var username = req.session.userid;
+        var option = {title: req.query.message, username: username};
+        //设置session
+        // req.session.userName = 'Anonymous';
+        // var colorScheme = req.session.colorScheme || 'dark';
+        //设置cookie
+        res.cookie('monster', 'nom nom');
+        res.cookie('signed_monster', 'nom nom', {
+            signed: true,
+            httpOnly: true, //防范xss攻击 只能服务器端修改
+            maxAge: 1000 * 60 //cookie 失效时间
+        });
+        res.render(url, option);
+    } else {
+        res.redirect(303, '/users/login');
+    }
 });
 
 router.get('/foo', function (req, res, next) {
@@ -141,12 +148,12 @@ router.post('/newsletter/subscribe', function (req, res) {
     //输入验证
     if (!email.match(VALID_EMAIL_REGEX)) {
         if (req.xhr) {
-            return res.json({error: 'Invalid email address'});
+            return res.json({error: 'Invalid emailkey address'});
         }
         req.session.flash = {
             type: 'danger',
             intro: 'Validation error!',
-            message: 'The email address you entered was not valid'
+            message: 'The emailkey address you entered was not valid'
         };
         return res.redirect(303, '/newsletter/archive');
     }
@@ -216,6 +223,27 @@ router.post('/api/attraction', function (req, res) {
         //如果保存成功,返回id
         res.json({id: attr._id});
     });
+});
+
+router.get('/posts/:userId', function (req, res) {
+    mongoose.model('posts').find({_id: req.params.userId}).populate('postedBy').exec(function (err, posts) {
+        res.send(posts);
+    });
+});
+
+router.get('/users', function (req, res) {
+    mongoose.model('users').find({}, function (err, users) {
+        if (err) {
+            console.log(err);
+            return;
+        }
+        res.send(users);
+    })
+});
+
+//发送Email
+router.get('/email',function (req,res) {
+    require('../email/email_api');
 });
 
 
